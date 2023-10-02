@@ -34,23 +34,22 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
     return cars;
 }
 
-
-void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
+void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
 {
     // ----------------------------------------------------
     // -----Open 3D viewer and display simple highway -----
     // ----------------------------------------------------
-    
+
     // RENDER OPTIONS
-    bool renderScene = true;
+    bool renderScene = false;
     std::vector<Car> cars = initHighway(renderScene, viewer);
-    
-    // TODO:: Create lidar sensor 
-
+    // TODO:: Create lidar sensor
+    Lidar *lidar = new Lidar(cars, 0);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr lidar_point_cloud = lidar->scan();
+    //renderRays(viewer, lidar->position, lidar_point_cloud);
+    renderPointCloud(viewer, lidar_point_cloud, "Lidar point cloud");
     // TODO:: Create point processor
-  
 }
-
 
 //setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
