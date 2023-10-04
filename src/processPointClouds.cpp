@@ -1,26 +1,24 @@
-// PCL lib Functions for processing point clouds 
+// PCL lib Functions for processing point clouds
 
+#include <unordered_set>
 #include "processPointClouds.h"
+#include "ransac.h"
 
-
-//constructor:
-template<typename PointT>
+// constructor:
+template <typename PointT>
 ProcessPointClouds<PointT>::ProcessPointClouds() {}
 
-
-//de-constructor:
-template<typename PointT>
+// de-constructor:
+template <typename PointT>
 ProcessPointClouds<PointT>::~ProcessPointClouds() {}
 
-
-template<typename PointT>
+template <typename PointT>
 void ProcessPointClouds<PointT>::numPoints(typename pcl::PointCloud<PointT>::Ptr cloud)
 {
     std::cout << cloud->points.size() << std::endl;
 }
 
-
-template<typename PointT>
+template <typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint)
 {
 
@@ -34,7 +32,6 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
     return cloud;
-
 }
 
 template <typename PointT>
@@ -68,23 +65,31 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     auto startTime = std::chrono::steady_clock::now();
     // TODO:: Fill in this function to find inliers for the cloud.
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
-    // Create the segmentation object
-    pcl::SACSegmentation<PointT> seg;
-    // Optional
-    seg.setOptimizeCoefficients(true);
-    // Mandatory
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setMaxIterations(maxIterations);
-    seg.setDistanceThreshold(distanceThreshold);
-    // Segment the largest planar component from the cloud
-    seg.setInputCloud(cloud);
-    seg.segment(*inliers, *coefficients);
-    if (inliers->indices.size() == 0)
+    // pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+    // // Create the segmentation object
+    // pcl::SACSegmentation<PointT> seg;
+    // // Optional
+    // seg.setOptimizeCoefficients(true);
+    // // Mandatory
+    // seg.setModelType(pcl::SACMODEL_PLANE);
+    // seg.setMethodType(pcl::SAC_RANSAC);
+    // seg.setMaxIterations(maxIterations);
+    // seg.setDistanceThreshold(distanceThreshold);
+    // // Segment the largest planar component from the cloud
+    // seg.setInputCloud(cloud);
+    // seg.segment(*inliers, *coefficients);
+    // if (inliers->indices.size() == 0)
+    // {
+    //     std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+    // }
+    
+    std::unordered_set<int> inliner_indices = Ransac3D(cloud, maxIterations, distanceThreshold);
+    // Iterate through the unordered_set and add elements to PointIndices
+    for (const int &index : inliner_indices)
     {
-        std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
+        inliers->indices.push_back(index);
     }
+
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "plane segmentation took " << elapsedTime.count() << " milliseconds" << std::endl;
@@ -92,7 +97,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     return segResult;
 }
 
-template<typename PointT>
+template <typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
 
@@ -110,8 +115,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
     return clusters;
 }
 
-
-template<typename PointT>
+template <typename PointT>
 Box ProcessPointClouds<PointT>::BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster)
 {
 
@@ -130,32 +134,29 @@ Box ProcessPointClouds<PointT>::BoundingBox(typename pcl::PointCloud<PointT>::Pt
     return box;
 }
 
-
-template<typename PointT>
+template <typename PointT>
 void ProcessPointClouds<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file)
 {
-    pcl::io::savePCDFileASCII (file, *cloud);
-    std::cerr << "Saved " << cloud->points.size () << " data points to "+file << std::endl;
+    pcl::io::savePCDFileASCII(file, *cloud);
+    std::cerr << "Saved " << cloud->points.size() << " data points to " + file << std::endl;
 }
 
-
-template<typename PointT>
+template <typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::loadPcd(std::string file)
 {
 
-    typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
+    typename pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>);
 
-    if (pcl::io::loadPCDFile<PointT> (file, *cloud) == -1) //* load the file
+    if (pcl::io::loadPCDFile<PointT>(file, *cloud) == -1) //* load the file
     {
-        PCL_ERROR ("Couldn't read file \n");
+        PCL_ERROR("Couldn't read file \n");
     }
-    std::cerr << "Loaded " << cloud->points.size () << " data points from "+file << std::endl;
+    std::cerr << "Loaded " << cloud->points.size() << " data points from " + file << std::endl;
 
     return cloud;
 }
 
-
-template<typename PointT>
+template <typename PointT>
 std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(std::string dataPath)
 {
 
@@ -165,5 +166,4 @@ std::vector<boost::filesystem::path> ProcessPointClouds<PointT>::streamPcd(std::
     sort(paths.begin(), paths.end());
 
     return paths;
-
 }
