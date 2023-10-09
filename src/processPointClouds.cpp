@@ -4,6 +4,8 @@
 #include "processPointClouds.h"
 #include "ransac.h"
 #include "ransac.cpp"
+#include "euclidean_cluster.h"
+#include "euclidean_cluster.cpp"
 
 // constructor:
 template <typename PointT>
@@ -113,43 +115,57 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 }
 
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize, bool useCustom)
 {
 
     // Time clustering process
     auto startTime = std::chrono::steady_clock::now();
 
-    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
-
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters_result;
     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
-
-    // Creating the KdTree object for the search method of the extraction
-    typename pcl::search::KdTree<PointT>::Ptr tree (new pcl::search::KdTree<PointT>);
-    tree->setInputCloud(cloud);
-    std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<PointT> ec;
-    ec.setClusterTolerance(clusterTolerance); // 2cm
-    ec.setMinClusterSize(minSize);
-    ec.setMaxClusterSize(maxSize);
-    ec.setSearchMethod(tree);
-    ec.setInputCloud(cloud);
-    ec.extract(cluster_indices);
-
-    for (const auto &cluster : cluster_indices)
+    if (!useCustom)
     {
-        typename pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
-        for (const auto &index : cluster.indices)
+        // PCL PROVIDED CLUSTERING
+        // Creating the KdTree object for the search method of the extraction
+        std::vector<pcl::PointIndices> cluster_indices;
+        typename pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+        tree->setInputCloud(cloud);
+        pcl::EuclideanClusterExtraction<PointT> ec;
+        ec.setClusterTolerance(clusterTolerance);
+        ec.setMinClusterSize(minSize);
+        ec.setMaxClusterSize(maxSize);
+        ec.setSearchMethod(tree);
+        ec.setInputCloud(cloud);
+        ec.extract(cluster_indices);
+        for (const auto &cluster : cluster_indices)
         {
-            cloud_cluster->push_back((*cloud)[index]);
+            typename pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
+            for (const auto &index : cluster.indices)
+            {
+                cloud_cluster->push_back((*cloud)[index]);
+            }
+            clusters_result.push_back(cloud_cluster);
         }
-        clusters.push_back(cloud_cluster);
     }
+    else
+    {
+        // CUSTOM CLUSTERING
+        // Create a KD-Tree for efficient nearest neighbor searches
+        KdTree *tree = new KdTree;
 
+        // Insert each point into the KD-Tree with its corresponding index
+        for (int i = 0; i < cloud->size(); i++)
+            tree->insert({cloud->points[i].x, cloud->points[i].y, cloud->points[i].z}, i);
+
+        // Perform Euclidean clustering on the points using the KD-Tree
+        clusters_result = euclideanCluster<PointT>(cloud, tree, clusterTolerance, minSize, maxSize);
+    }
+    
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
+    std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters_result.size() << " clusters" << std::endl;
 
-    return clusters;
+    return clusters_result;
 }
 
 template <typename PointT>
