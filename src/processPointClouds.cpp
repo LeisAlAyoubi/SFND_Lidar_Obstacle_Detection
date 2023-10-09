@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include "processPointClouds.h"
 #include "ransac.h"
+#include "ransac.cpp"
 
 // constructor:
 template <typename PointT>
@@ -97,9 +98,9 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     //     std::cerr << "Could not estimate a planar model for the given dataset." << std::endl;
     // }
     
-    std::unordered_set<int> inliner_indices = Ransac3D(cloud, maxIterations, distanceThreshold);
+    std::unordered_set<int> inlier_indices = Ransac3D<PointT>(cloud, maxIterations, distanceThreshold);
     // Iterate through the unordered_set and add elements to PointIndices
-    for (const int &index : inliner_indices)
+    for (const int &index : inlier_indices)
     {
         inliers->indices.push_back(index);
     }

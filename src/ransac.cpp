@@ -5,7 +5,8 @@
 #include <pcl/common/geometry.h>
 #include <cmath>
 
-std::unordered_set<int> Ransac3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int maxIterations, float distanceTol)
+template <typename PointT>
+std::unordered_set<int> Ransac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol)
 {
     std::unordered_set<int> inliersResult;
     srand(time(NULL));
@@ -23,11 +24,11 @@ std::unordered_set<int> Ransac3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int 
         }
 
         auto itr = inliners.begin();
-        pcl::PointXYZ point1 = cloud->points[*itr];
+        PointT point1 = cloud->points[*itr];
         itr++;
-        pcl::PointXYZ point2 = cloud->points[*itr];
+        PointT point2 = cloud->points[*itr];
         itr++;
-        pcl::PointXYZ point3 = cloud->points[*itr];
+        PointT point3 = cloud->points[*itr];
 
         // Create plane spanning vectors
         Eigen::Vector3f v1(point2.x - point1.x, point2.y - point1.y, point2.z - point1.z);
@@ -43,7 +44,7 @@ std::unordered_set<int> Ransac3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int 
         // Measure distance between every point and fitted plane
         for (int index = 0; index < cloud->points.size(); index++)
         {
-            pcl::PointXYZ point = cloud->points[index];
+            PointT point = cloud->points[index];
             float X1 = point.x;
             float Y1 = point.y;
             float Z1 = point.z;
@@ -62,6 +63,6 @@ std::unordered_set<int> Ransac3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int 
         }
     }
 
-    // Return indices of inliers from fitted plane with the most inliers
+    // Return indices of inliers from the fitted plane with the most inliers
     return inliersResult;
 }
