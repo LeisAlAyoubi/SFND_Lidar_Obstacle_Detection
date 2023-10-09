@@ -79,9 +79,43 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr &viewer)
 
     ProcessPointClouds<pcl::PointXYZI> *pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.1, Eigen::Vector4f(-25, -9, -5, 1), Eigen::Vector4f(25, 9, 5, 1));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.1, Eigen::Vector4f(-15, -7, -5, 1), Eigen::Vector4f(25, 8, 5, 1));
     std::cout << "Number of points in the filtered cloud: " << filterCloud->points.size() << std::endl;
     renderPointCloud(viewer, filterCloud, "filterCloud");
+
+    ProcessPointClouds<pcl::PointXYZI> point_cloud_processor;
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = point_cloud_processor.SegmentPlane(filterCloud, 10, 0.2);
+
+    renderPointCloud(viewer,segmentCloud.first,"obstCloud",Color(1,0,0));
+    renderPointCloud(viewer,segmentCloud.second,"planeCloud",Color(0,1,0));
+
+
+
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = point_cloud_processor.Clustering(segmentCloud.first, 0.5, 100, 1000);
+
+    int clusterId = 0;
+    std::vector<Color> colors = {
+        {1, 0, 0},   // Red
+        {0, 0, 1},   // Blue
+        {1, 1, 0},   // Yellow
+        {1, 0, 1},   // Magenta
+        {0, 1, 1},   // Cyan
+        {0.5, 0.5, 0.5}, // Gray
+        {1, 0.5, 0}, // Orange
+        {0, 0.5, 1}, // Light Blue
+        {0.5, 0, 0.5} // Purple
+    };
+
+    for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters)
+    {
+        std::cout << "cluster size ";
+        point_cloud_processor.numPoints(cluster);
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors[clusterId]);
+
+        Box box = point_cloud_processor.BoundingBox(cluster);
+        renderBox(viewer,box,clusterId);
+        ++clusterId;
+    }
 }
 
 //setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
