@@ -5,7 +5,6 @@
 #include "ransac.h"
 #include "ransac.cpp"
 #include "euclidean_cluster.h"
-#include "euclidean_cluster.cpp"
 
 // constructor:
 template <typename PointT>
@@ -152,15 +151,34 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
         // CUSTOM CLUSTERING
         // Create a KD-Tree for efficient nearest neighbor searches
         KdTree *tree = new KdTree;
+        std::vector<std::vector<float>> points;
 
-        // Insert each point into the KD-Tree with its corresponding index
+        // Insert each point into the KD-Tree with its corresponding index and into the points-vector
         for (int i = 0; i < cloud->size(); i++)
+        {
+            points.push_back({cloud->points[i].x, cloud->points[i].y, cloud->points[i].z});
             tree->insert({cloud->points[i].x, cloud->points[i].y, cloud->points[i].z}, i);
+        }
 
         // Perform Euclidean clustering on the points using the KD-Tree
-        clusters_result = euclideanCluster<PointT>(cloud, tree, clusterTolerance, minSize, maxSize);
+        std::vector<std::vector<int>> cluster_indices = euclideanCluster(points, tree, clusterTolerance);
+
+        for (const std::vector<int> &cluster : cluster_indices)
+        {
+            int clusterSize = cluster.size();
+            if (clusterSize >= minSize && clusterSize <= maxSize)
+            {
+                typename pcl::PointCloud<PointT>::Ptr cluster_cloud(new pcl::PointCloud<PointT>);
+                for (int index : cluster)
+                {
+                    cluster_cloud->push_back(cloud->points[index]);
+                }
+                clusters_result.push_back(cluster_cloud);
+            }
+        }
+        // clusters_result = euclideanCluster<PointT>(cloud, tree, clusterTolerance, minSize, maxSize);
     }
-    
+
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters_result.size() << " clusters" << std::endl;
