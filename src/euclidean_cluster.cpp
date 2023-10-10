@@ -1,50 +1,54 @@
 #include "euclidean_cluster.h"
 
-template <typename PointT>
-void Proximity(const typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, int pointIdx, std::vector<int>& cluster, float distanceTol, std::vector<bool>& processed)
+/**
+ * Recursive function to find nearby points within a specified Euclidean distance.
+ *
+ * @param points The list of points to search.
+ * @param tree A pointer to the KD-Tree data structure.
+ * @param pointIdx The index of the current point to start the search from.
+ * @param cluster A vector to store the indices of points in the cluster.
+ * @param distanceTol The maximum Euclidean distance to consider for proximity.
+ * @param processed A vector to keep track of processed points.
+ */
+void Proximity(const std::vector<std::vector<float>>& points, KdTree* tree, int pointIdx, std::vector<int>& cluster, float distanceTol, std::vector<bool>& processed)
 {
     processed[pointIdx] = true;
     cluster.push_back(pointIdx);
 
-    std::vector<int> nearbyPoints = tree->search({cloud->points[pointIdx].x, cloud->points[pointIdx].y, cloud->points[pointIdx].z}, distanceTol);
+    std::vector<int> nearbyPoints = tree->search(points[pointIdx], distanceTol);
 
     for (int i : nearbyPoints)
     {
         if (!processed[i])
         {
-            Proximity<PointT>(cloud, tree, i, cluster, distanceTol, processed);
+            Proximity(points, tree, i, cluster, distanceTol, processed);
         }
     }
 }
 
-template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(const typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol, int minSize, int maxSize)
+/**
+ * Cluster points in the input list based on Euclidean proximity using a KD-Tree.
+ *
+ * @param points The list of points to cluster.
+ * @param tree A pointer to the KD-Tree data structure.
+ * @param distanceTol The maximum Euclidean distance to consider for clustering.
+ * @return A vector of vectors, where each inner vector represents a cluster of points.
+ */
+std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
 {
-    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters_result;
-    std::vector<bool> processed(cloud->size(), false);
+    std::vector<std::vector<int>> clusters;
+    std::vector<bool> processed(points.size(), false);
 
-    for (int i = 0; i < cloud->size(); ++i)
+    for (int i = 0; i < points.size(); ++i)
     {
         if (!processed[i])
         {
-            std::vector<int> cluster_indices;
-            Proximity<PointT>(cloud, tree, i, cluster_indices, distanceTol, processed);
-
-            int clusterSize = cluster_indices.size();
-
-            if (clusterSize >= minSize && clusterSize <= maxSize)
-            {
-                typename pcl::PointCloud<PointT>::Ptr cluster_cloud(new pcl::PointCloud<PointT>);
-                for (int index : cluster_indices)
-                {
-                    cluster_cloud->push_back(cloud->points[index]);
-                }
-
-                clusters_result.push_back(cluster_cloud);
-            }
+            std::vector<int> cluster;
+            Proximity(points, tree, i, cluster, distanceTol, processed);
+            clusters.push_back(cluster);
         }
     }
 
-    return clusters_result;
+    return clusters;
 }
 
