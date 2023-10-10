@@ -1,3 +1,63 @@
+# Lesson 1: Introduction to Lidar and Point Clouds
+## LIDAR (Light Detecting and Ranging) 
+
+Lidar sensing involves the emission of thousands of infrared laser signals at various angles, covering a 360-degree range. These signals bounce off objects, returning to the sensor. By measuring the time it takes for the signals to return, Lidar calculates the distance to these objects with high precision. Additionally, the intensity of the reflected signals can be measured to gain insights into the material properties of the objects. While Lidar provides accurate 3D models of the surrounding environment, it is currently quite expensive, often exceeding $60,000 for a standard unit.
+
+## HDL 64 Lidar Specifications
+
+<div style="text-align:center;">
+    <img src="media/lidar-velodyne.png" width="700" height="400" />
+</div>
+
+Velodyne lidar sensors, with HDL 64, HDL 32, VLP 16 from left to right. The larger the sensor, the higher the resolution.
+
+- **Number of Layers:** 64 layers, each sent out at a different angle from the z-axis, providing varying inclines for comprehensive coverage.
+
+- **Angular Resolution:** Each layer has an angular resolution of 0.08 degrees, ensuring fine detail in the scanned data.
+
+- **Scanning Rate:** On average, the Lidar scans ten times a second, rapidly capturing data points for real-time analysis.
+
+- **Maximum Range for Cars and Foliage:** It can detect objects such as cars and foliage at distances of up to 120 meters, making it suitable for long-range applications.
+
+- **Pavement Detection Range:** The Lidar is capable of sensing pavement surfaces up to a range of 50 meters, which is valuable for navigation and road analysis.
+
+These specifications highlight the Lidar's ability to provide high-resolution, multi-layered data with impressive range and precision, making it suitable for various applications in areas like autonomous vehicles, mapping, and environmental monitoring.
+
+<div style="text-align:center;">
+    <img src="media/hdl-64e.png" width="700" height="400" />
+</div>
+
+<div style="text-align:center;">
+    <img src="media/vlp-sensor-specs.png" width="700" height="400" />
+</div>
+
+## Point Cloud
+
+Lidar data is typically stored in a format called Point Cloud Data (PCD). A .pcd file represents a single snapshot of the environment, containing (x, y, z) Cartesian coordinates along with intensity values (i). For example, with a VLP 64 Lidar, a single .pcd file would contain approximately 256,000 (x, y, z, i) data points, capturing the spatial information and intensity data from a single scan.
+The coordinate system used for point cloud data aligns with the car's local coordinate system. In this system:
+
+- The x-axis points towards the front of the car.
+- The y-axis points to the left of the car.
+- The z-axis points up above the car.
+
+This coordinate system follows the right-handed convention, where you can use your right hand to visualize the positive direction of each axis.
+
+<div style="text-align:center;">
+    <img src="media/pcd-coordinates.png" width="800" height="400" />
+</div>
+
+## Point Cloud Library
+
+<div style="text-align:center;">
+    <img src="media/pcl-logo.png" width="400" height="200" />
+</div>
+
+In this module, the focus is on processing point cloud data within a C++ environment. Prior familiarity with C++ can be advantageous for participants. The primary tool used for this purpose is the Point Cloud Library (PCL), an open-source C++ library specifically designed for manipulating point cloud data. PCL will be utilized for tasks such as data visualization, rendering shapes, and leveraging its built-in processing functions.
+The robotics community widely adopts PCL for handling point cloud data, and there are ample online tutorials available for guidance. The module will utilize various PCL functions, including Segmentation, Extraction, and Clustering, to identify obstacles within point cloud data.
+
+## Excersise 1: Lidar object in simulation
+
+
 # Sensor Fusion Self-Driving Car Course
 
 <img src="media/ObstacleDetectionFPS.gif" width="700" height="400" />
