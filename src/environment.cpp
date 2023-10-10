@@ -79,7 +79,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
 
     //ProcessPointClouds<pcl::PointXYZI> *pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
     //pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.1, Eigen::Vector4f(-15, -7, -5, 1), Eigen::Vector4f(25, 7, 5, 1));
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.25, Eigen::Vector4f(-15, -6, -5, 1), Eigen::Vector4f(25, 7, 5, 1));
     std::cout << "Number of points in the filtered cloud: " << filterCloud->points.size() << std::endl;
     renderPointCloud(viewer, filterCloud, "filterCloud");
 
@@ -91,7 +91,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
 
 
 
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = point_cloud_processor.Clustering(segmentCloud.first, 0.5, 100, 1000, false);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = point_cloud_processor.Clustering(segmentCloud.first, 0.5, 10, 500, true);
 
     int clusterId = 0;
     std::vector<Color> colors = {
