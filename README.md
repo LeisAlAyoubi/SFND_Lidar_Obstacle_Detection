@@ -55,8 +55,47 @@ This coordinate system follows the right-handed convention, where you can use yo
 In this module, the focus is on processing point cloud data within a C++ environment. Prior familiarity with C++ can be advantageous for participants. The primary tool used for this purpose is the Point Cloud Library (PCL), an open-source C++ library specifically designed for manipulating point cloud data. PCL will be utilized for tasks such as data visualization, rendering shapes, and leveraging its built-in processing functions.
 The robotics community widely adopts PCL for handling point cloud data, and there are ample online tutorials available for guidance. The module will utilize various PCL functions, including Segmentation, Extraction, and Clustering, to identify obstacles within point cloud data.
 
-## Excersise 1: Lidar object in simulation
+## Excersise 1: Lidar object and Point cloud in simulation [f6f591b](https://github.com/LeisAlAyoubi/SFND_Lidar_Obstacle_Detection/commit/d3061c10a49d5b3aa8673b5f67b2cf7f6f6f591b)
 
+### 1. Create a lidar object
+
+In the "simpleHighway" function of the code, a Lidar object was instantiated. This Lidar object, as defined in the "src/sensors/lidar.h" header file, was included at the beginning of the "environment.cpp" file. The instantiation involved creating a pointer to a Lidar object on the heap using the "new" keyword.
+The Lidar constructor took two arguments: "cars" and the "slope of the ground." These arguments were essential for modeling ray collisions in the Lidar object. For this instantiation, the Lidar object was created with a slope of 0.
+It's worth noting that the use of a pointer and instantiation on the heap was chosen due to the potential size of the Lidar object, which could hold large point cloud data. Heap allocation provided more memory space than the stack but resulted in slower object lookup compared to the faster stack lookup.
+In the exercise, the task was to create a point cloud by calling the "lidar scan()" method on the Lidar object. The results were stored in a PointCloud pointer object of type "pcl::PointCloudpcl::PointXYZ::Ptr," with the point type specified as "pcl::PointXYZ."
+To visualize the point cloud data, the "renderRays" function was called. This function, which was defined in "src/render," allowed the rendering of lidar rays as line segments in the pcl viewer.
+
+<div style="text-align:center;">
+    <img src="media/rays.png" width="700" height="400" />
+</div>
+
+### 2. Adjust the lidar parameters
+
+The changes made to the Lidar configuration involve several adjustments:
+- Increasing the minimum distance: This modification prevents the inclusion of contact points from the roof of the car in the captured data.
+- Increasing both horizontal and vertical angle resolution: This enhances the level of detail and accuracy in the Lidar's scanning process, providing more comprehensive data.
+- Adding noise: A significant amount of noise is introduced, measured in meters. This substantial noise level contributes to more realistic and interesting point data in the scene.
+
+<div style="text-align:center;">
+    <img src="media/fulllidar.png" width="700" height="400" />
+</div>
+
+### 3. Examine the point cloud
+To view the point cloud data, the "renderPointCloud" function in the "render" module can be utilized. Optionally, it's possible to disable rendering for the highway scene to examine the point cloud in isolation. By setting a higher "minDistance," it becomes possible to eliminate points that represent contact with the roof of the car, as these are not useful for detecting other vehicles. Furthermore, introducing some level of noise variance is beneficial, as it enhances the visual complexity of point clouds. Additionally, adding noise is instrumental in developing more robust point processing functions.
+
+<div style="text-align:center;">
+    <img src="media/pcd1.png" width="700" height="400" />
+</div>
+
+# Lesson 2: Point Cloud Segmentation
+
+In the point cloud data, objects that appear but are not obstacles generally include:
+
+1. **Free Space on the Road**: Open, unoccupied spaces on the road where there are no obstacles, such as empty lanes or gaps between vehicles.
+
+2. **Road Surface**: When the road is flat, it's relatively straightforward to distinguish road points from non-road points. The road surface itself is not considered an obstacle.
+
+To identify and separate these non-obstacle elements, a technique called Planar Segmentation is commonly employed. Planar Segmentation utilizes the RANSAC (Random Sample Consensus) algorithm, which is effective in identifying planar surfaces within the point cloud data, such as the road, and separating them from other objects or obstacles in the scene. This method aids in distinguishing between the road surface and any potential obstacles or free space.
 
 # Sensor Fusion Self-Driving Car Course
 
